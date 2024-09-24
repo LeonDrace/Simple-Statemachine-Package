@@ -2,7 +2,7 @@
   "name": "com.leondrace.simplestatemachine",
   "displayName": "Simple Statemachine",
   "description": "A simple all purpose Statemachine.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "keywords": [
     "ai",
     "statemachine",
