@@ -3,14 +3,17 @@ using System.Collections.Generic;
 
 namespace LeonDrace.SimpleStatemachine
 {
+	/// <summary>
+	/// A simple type based statemachine.
+	/// </summary>
 	public class StateMachine
 	{
-		private StateNode current;
+		private StateNode m_Current;
 
-		private Dictionary<Type, StateNode> nodes = new();
-		private List<ITransition> anyTransitions = new();
+		private Dictionary<Type, StateNode> m_Nodes = new();
+		private List<ITransition> m_AnyTransitions = new();
 
-		public IState CurrentState => current == null ? null : current.State;
+		public IState CurrentState => m_Current == null ? null : m_Current.State;
 
 		public void Update()
 		{
@@ -20,7 +23,7 @@ namespace LeonDrace.SimpleStatemachine
 				ChangeState(transition.To);
 			}
 
-			current.State?.OnUpdate();
+			m_Current.State?.OnUpdate();
 		}
 
 		/// <summary>
@@ -29,10 +32,10 @@ namespace LeonDrace.SimpleStatemachine
 		/// <param name="state"></param>
 		public void SetState(IState state)
 		{
-			if (current == null)
+			if (m_Current == null)
 			{
-				current = GetOrAddNode(state);
-				current.State?.OnEnter();
+				m_Current = GetOrAddNode(state);
+				m_Current.State?.OnEnter();
 				return;
 			}
 
@@ -48,7 +51,7 @@ namespace LeonDrace.SimpleStatemachine
 		/// <returns></returns>
 		public ITransition AddTransition(IState from, IState to, IPredicate condition)
 		{
-			return GetOrAddNode(from).AddTransition(to, condition);
+			return GetOrAddNode(from).AddTransition(GetOrAddNode(to).State, condition);
 		}
 
 		/// <summary>
@@ -59,8 +62,9 @@ namespace LeonDrace.SimpleStatemachine
 		/// <returns></returns>
 		public ITransition AddAnyTransition(IState to, IPredicate condition)
 		{
-			anyTransitions.Add(new Transition(GetOrAddNode(to).State, condition));
-			return anyTransitions[anyTransitions.Count - 1];
+			var transition = new Transition(GetOrAddNode(to).State, condition);
+			m_AnyTransitions.Add(transition);
+			return transition;
 		}
 
 		/// <summary>
@@ -70,7 +74,7 @@ namespace LeonDrace.SimpleStatemachine
 		/// <returns></returns>
 		public bool HasAnyTransition(ITransition transition)
 		{
-			return anyTransitions.Contains(transition);
+			return m_AnyTransitions.Contains(transition);
 		}
 
 		/// <summary>
@@ -80,8 +84,8 @@ namespace LeonDrace.SimpleStatemachine
 		/// <returns></returns>
 		public bool HasCurrentTransition(ITransition transition)
 		{
-			if (current == null) return false;
-			return current.Transitions.Contains(transition);
+			if (m_Current == null) return false;
+			return m_Current.Transitions.Contains(transition);
 		}
 
 		/// <summary>
@@ -92,7 +96,7 @@ namespace LeonDrace.SimpleStatemachine
 		/// <returns></returns>
 		public bool HasTransition<T>(ITransition transition)
 		{
-			if (nodes.TryGetValue(typeof(T), out var node))
+			if (m_Nodes.TryGetValue(typeof(T), out var node))
 			{
 				return node.Transitions.Contains(transition);
 			}
@@ -106,18 +110,18 @@ namespace LeonDrace.SimpleStatemachine
 		/// <returns></returns>
 		public bool IsCurrentState(IState state)
 		{
-			if (current == null) return false;
-			return current.State == state;
+			if (m_Current == null) return false;
+			return m_Current.State == state;
 		}
 
 		private StateNode GetOrAddNode(IState state)
 		{
-			StateNode node = nodes.GetValueOrDefault(state.GetType());
+			StateNode node = m_Nodes.GetValueOrDefault(state.GetType());
 
 			if (node == null)
 			{
 				node = new StateNode(state);
-				nodes.Add(state.GetType(), node);
+				m_Nodes.Add(state.GetType(), node);
 			}
 
 			return node;
@@ -125,59 +129,59 @@ namespace LeonDrace.SimpleStatemachine
 
 		private void ChangeState(IState state)
 		{
-			if (state == current.State) return;
+			if (state == m_Current.State) return;
 
-			IState previousState = current.State;
-			IState nextState = nodes[state.GetType()].State;
+			IState previousState = m_Current.State;
+			IState nextState = m_Nodes[state.GetType()].State;
 
 			previousState?.OnExit();
 			nextState?.OnEnter();
-			current = nodes[state.GetType()];
+			m_Current = m_Nodes[state.GetType()];
 		}
 
 		private ITransition GetTransition()
 		{
-			//Evaluate any transitions
-			int count = anyTransitions.Count;
+			//Evaluate any transitions.
+			int count = m_AnyTransitions.Count;
 			for (int i = 0; i < count; i++)
 			{
-				if (anyTransitions[i].Condition.Evaluate())
+				if (m_AnyTransitions[i].Condition.Evaluate())
 				{
-					return anyTransitions[i];
+					return m_AnyTransitions[i];
 				}
 			}
 
 			//Evaluate current state transitions.
-			return current.EvaluateTransitions();
+			return m_Current.EvaluateTransitions();
 		}
 
 		private sealed class StateNode
 		{
 			public IState State { get; }
-			public List<ITransition> Transitions => transitions;
+			public List<ITransition> Transitions => m_Transitions;
 
-			private List<ITransition> transitions;
+			private List<ITransition> m_Transitions;
 
 			public StateNode(IState state)
 			{
 				State = state;
-				transitions = new List<ITransition>();
+				m_Transitions = new List<ITransition>();
 			}
 
 			public ITransition AddTransition(IState to, IPredicate condition)
 			{
-				transitions.Add(new Transition(to, condition));
-				return transitions[transitions.Count - 1];
+				m_Transitions.Add(new Transition(to, condition));
+				return m_Transitions[m_Transitions.Count - 1];
 			}
 
 			public ITransition EvaluateTransitions()
 			{
-				int count = transitions.Count;
+				int count = m_Transitions.Count;
 				for (int i = 0; i < count; i++)
 				{
-					if (transitions[i].Condition.Evaluate())
+					if (m_Transitions[i].Condition.Evaluate())
 					{
-						return transitions[i];
+						return m_Transitions[i];
 					}
 				}
 				return null;

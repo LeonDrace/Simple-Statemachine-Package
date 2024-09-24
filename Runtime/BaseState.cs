@@ -2,11 +2,11 @@
 {
 	public abstract class BaseState<TBlackboard> : IState
 	{
-		protected TBlackboard blackboard;
+		protected TBlackboard m_Blackboard;
 
 		public BaseState(TBlackboard blackboard)
 		{
-			this.blackboard = blackboard;
+			this.m_Blackboard = blackboard;
 		}
 
 		public virtual void OnEnter()

@@ -4,13 +4,13 @@ namespace LeonDrace.SimpleStatemachine
 {
 	public class FuncPredicate : IPredicate
 	{
-		private readonly Func<bool> func;
+		private readonly Func<bool> m_Func;
 
 		public FuncPredicate(Func<bool> func)
 		{
-			this.func = func;
+			this.m_Func = func;
 		}
 
-		public bool Evaluate() => func.Invoke();
+		public bool Evaluate() => m_Func.Invoke();
 	}
 }
