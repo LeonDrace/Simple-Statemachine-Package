@@ -17,7 +17,7 @@ namespace LeonDrace.SimpleStatemachine
 
 		public void Update()
 		{
-			ITransition transition = GetTransition();
+			var transition = GetTransition();
 			if (transition != null)
 			{
 				ChangeState(transition.To);
@@ -40,6 +40,18 @@ namespace LeonDrace.SimpleStatemachine
 			}
 
 			ChangeState(GetOrAddNode(state).State);
+		}
+
+		public bool HasState(IState state)
+		{
+			var node = m_Nodes.GetValueOrDefault(state.GetType());
+
+			if (node == null)
+			{
+				return false;
+			}
+
+			return true;
 		}
 
 		/// <summary>
@@ -116,7 +128,7 @@ namespace LeonDrace.SimpleStatemachine
 
 		private StateNode GetOrAddNode(IState state)
 		{
-			StateNode node = m_Nodes.GetValueOrDefault(state.GetType());
+			var node = m_Nodes.GetValueOrDefault(state.GetType());
 
 			if (node == null)
 			{
@@ -131,8 +143,8 @@ namespace LeonDrace.SimpleStatemachine
 		{
 			if (state == m_Current.State) return;
 
-			IState previousState = m_Current.State;
-			IState nextState = m_Nodes[state.GetType()].State;
+			var previousState = m_Current.State;
+			var nextState = m_Nodes[state.GetType()].State;
 
 			previousState?.OnExit();
 			nextState?.OnEnter();
