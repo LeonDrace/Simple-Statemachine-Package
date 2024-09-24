@@ -1,0 +1,16 @@
+{
+  "name": "com.leondrace.simplestatemachine",
+  "displayName": "Simple Statemachine",
+  "description": "A simple all purpose Statemachine.",
+  "version": "0.0.1",
+  "keywords": [
+    "ai",
+    "statemachine",
+  ],
+  "category": "Ai",
+  "dependencies": {},
+  "author": {
+    "name": "Leon Drace",
+    "url": "https://github.com/LeonDrace"
+  }
+}
